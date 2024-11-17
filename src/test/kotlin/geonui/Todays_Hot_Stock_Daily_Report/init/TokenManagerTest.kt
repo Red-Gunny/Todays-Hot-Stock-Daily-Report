@@ -3,38 +3,26 @@ package geonui.Todays_Hot_Stock_Daily_Report.init
 import geonui.Todays_Hot_Stock_Daily_Report.dto.body.AuthBody
 import geonui.Todays_Hot_Stock_Daily_Report.dto.header.AuthBaseHeader
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Configuration
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.web.reactive.function.client.WebClient
+import kotlin.test.Test
 
 
-@Configuration
-class TokenManager {
+@SpringBootTest(classes = [TokenManager::class, AuthBody::class])
+class TokenManagerTest {
+
+    private val webClient = WebClient.create("https://openapivts.koreainvestment.com:29443")
+
+    @Autowired
+    private lateinit var tokenManager: TokenManager
 
     @Autowired
     private lateinit var authBody: AuthBody
 
+    @Test
+    fun normal_api_send_test() {
 
-    /**
-     *
-     * [토큰을 하나 받아온다]
-     * 헤더는 BaseHeader에 있는 부분
-     *
-     * body는  appkey :
-     *         appsecret :
-     *         grant_type : "client_credentials"
-     *
-     */
-    fun getToken() {
-
-
-        // WebClient 생성
-        val webClient = WebClient.builder()
-            .baseUrl("https://openapivts.koreainvestment.com:29443")
-            .build()
-
-        // API 호출
-        webClient
-            .post()
+        val responseDto = webClient.post()
             .uri("/oauth2/tokenP")
             .headers { headers ->
                 headers.set("Content-Type", AuthBaseHeader().contentType)
@@ -45,9 +33,15 @@ class TokenManager {
             .bodyValue(authBody)
             .retrieve()
             .bodyToMono(TokenResponseDto::class.java)
-            .subscribe {
-                response -> println(response)
-            }
+            .block()
+
+
+        println(responseDto?.access_token)
+        println(responseDto?.token_type)
+        println(responseDto?.expires_in.toString())
+        println(responseDto?.access_token_token_expired)
+
+
 
     }
 
